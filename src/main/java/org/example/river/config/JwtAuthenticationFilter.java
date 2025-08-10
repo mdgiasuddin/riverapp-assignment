@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.river.repository.UserRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +25,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-//    private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -33,6 +34,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader(AUTHORIZATION);
+        final String requestUri = request.getRequestURI();
+
         if (authHeader == null || !authHeader.startsWith(TOKEN_TYPE)) {
             filterChain.doFilter(request, response);
             return;
@@ -41,6 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String accessToken = authHeader.substring(TOKEN_TYPE.length());
         String email = jwtService.extractEmail(accessToken);
 
+        if (!requestUri.equals("/api/users")) {
+            userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User with email " + email + " not found"));
+        }
         if (jwtService.isTokenValid(accessToken)) {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     email,

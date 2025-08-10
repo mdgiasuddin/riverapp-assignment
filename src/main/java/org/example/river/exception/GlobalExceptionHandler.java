@@ -23,6 +23,12 @@ public class GlobalExceptionHandler {
         return new ExceptionResponse("", e.getMessage());
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RulesViolationException.class)
+    public ExceptionResponse handleException(RulesViolationException e) {
+        return new ExceptionResponse("", e.getMessage());
+    }
+
     @ResponseStatus(HttpStatus.PRECONDITION_FAILED)
     @ExceptionHandler(SQLException.class)
     public ExceptionResponse handleException(SQLException e) {
